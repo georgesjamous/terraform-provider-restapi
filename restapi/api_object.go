@@ -30,6 +30,7 @@ type apiObjectOpts struct {
 	id            string
 	idAttribute   string
 	data          string
+	secretName    string
 }
 
 /*APIObject is the state holding struct for a restapi_object resource*/
@@ -49,7 +50,7 @@ type APIObject struct {
 	readSearch    map[string]string
 	id            string
 	idAttribute   string
-	rawData       string
+	secretName    string
 
 	/* Set internally */
 	data        map[string]interface{} /* Data as managed by the user */
@@ -128,7 +129,7 @@ func NewAPIObject(iClient *APIClient, opts *apiObjectOpts) (*APIObject, error) {
 		updateData:    make(map[string]interface{}),
 		destroyData:   make(map[string]interface{}),
 		apiData:       make(map[string]interface{}),
-		rawData:       opts.data,
+		secretName:    opts.secretName,
 	}
 
 	if opts.data != "" {
@@ -315,7 +316,14 @@ func (obj *APIObject) readObject() error {
 		return fmt.Errorf("cannot read an object unless the ID has been set")
 	}
 
-	resultString := obj.rawData //fmt.Sprintf("{ \"_id\": \"%s\", \"name\": \"%s\" }", obj.id, obj.data)
+	// data := make(map[string]interface{})
+	// err := json.Unmarshal([]byte(obj.rawData), &obj.data)
+	// if err != nil {
+	// 	return fmt.Errorf("error parsing saved data: %v", err.Error())
+	// }
+	// data["_id"] = obj.id
+
+	resultString := fmt.Sprintf("{ \"_id\": \"%s\", \"name\": \"%s\" }", obj.id, obj.secretName)
 
 	// getPath := obj.getPath
 	// if obj.queryString != "" {
