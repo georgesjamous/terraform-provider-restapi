@@ -49,6 +49,7 @@ type APIObject struct {
 	readSearch    map[string]string
 	id            string
 	idAttribute   string
+	rawData       string
 
 	/* Set internally */
 	data        map[string]interface{} /* Data as managed by the user */
@@ -127,6 +128,7 @@ func NewAPIObject(iClient *APIClient, opts *apiObjectOpts) (*APIObject, error) {
 		updateData:    make(map[string]interface{}),
 		destroyData:   make(map[string]interface{}),
 		apiData:       make(map[string]interface{}),
+		rawData:       opts.data,
 	}
 
 	if opts.data != "" {
@@ -313,47 +315,49 @@ func (obj *APIObject) readObject() error {
 		return fmt.Errorf("cannot read an object unless the ID has been set")
 	}
 
-	getPath := obj.getPath
-	if obj.queryString != "" {
-		if obj.debug {
-			log.Printf("api_object.go: Adding query string '%s'", obj.queryString)
-		}
-		getPath = fmt.Sprintf("%s?%s", obj.getPath, obj.queryString)
-	}
+	resultString := obj.rawData //fmt.Sprintf("{ \"_id\": \"%s\", \"name\": \"%s\" }", obj.id, obj.data)
 
-	resultString, err := obj.apiClient.sendRequest(obj.readMethod, strings.Replace(getPath, "{id}", obj.id, -1), "")
-	if err != nil {
-		if strings.Contains(err.Error(), "unexpected response code '404'") {
-			log.Printf("api_object.go: 404 error while refreshing state for '%s' at path '%s'. Removing from state.", obj.id, obj.getPath)
-			obj.id = ""
-			return nil
-		}
-		return err
-	}
+	// getPath := obj.getPath
+	// if obj.queryString != "" {
+	// 	if obj.debug {
+	// 		log.Printf("api_object.go: Adding query string '%s'", obj.queryString)
+	// 	}
+	// 	getPath = fmt.Sprintf("%s?%s", obj.getPath, obj.queryString)
+	// }
 
-	searchKey := obj.readSearch["search_key"]
-	searchValue := obj.readSearch["search_value"]
+	// resultString, err := obj.apiClient.sendRequest(obj.readMethod, strings.Replace(getPath, "{id}", obj.id, -1), "")
+	// if err != nil {
+	// 	if strings.Contains(err.Error(), "unexpected response code '404'") {
+	// 		log.Printf("api_object.go: 404 error while refreshing state for '%s' at path '%s'. Removing from state.", obj.id, obj.getPath)
+	// 		obj.id = ""
+	// 		return nil
+	// 	}
+	// 	return err
+	// }
 
-	if searchKey != "" && searchValue != "" {
+	// searchKey := obj.readSearch["search_key"]
+	// searchValue := obj.readSearch["search_value"]
 
-		obj.searchPath = strings.Replace(obj.getPath, "{id}", obj.id, -1)
+	// if searchKey != "" && searchValue != "" {
 
-		queryString := obj.readSearch["query_string"]
-		if obj.queryString != "" {
-			if obj.debug {
-				log.Printf("api_object.go: Adding query string '%s'", obj.queryString)
-			}
-			queryString = fmt.Sprintf("%s&%s", obj.readSearch["query_string"], obj.queryString)
-		}
-		resultsKey := obj.readSearch["results_key"]
-		objFound, err := obj.findObject(queryString, searchKey, searchValue, resultsKey)
-		if err != nil {
-			obj.id = ""
-			return nil
-		}
-		objFoundString, _ := json.Marshal(objFound)
-		return obj.updateState(string(objFoundString))
-	}
+	// 	obj.searchPath = strings.Replace(obj.getPath, "{id}", obj.id, -1)
+
+	// 	queryString := obj.readSearch["query_string"]
+	// 	if obj.queryString != "" {
+	// 		if obj.debug {
+	// 			log.Printf("api_object.go: Adding query string '%s'", obj.queryString)
+	// 		}
+	// 		queryString = fmt.Sprintf("%s&%s", obj.readSearch["query_string"], obj.queryString)
+	// 	}
+	// 	resultsKey := obj.readSearch["results_key"]
+	// 	objFound, err := obj.findObject(queryString, searchKey, searchValue, resultsKey)
+	// 	if err != nil {
+	// 		obj.id = ""
+	// 		return nil
+	// 	}
+	// 	objFoundString, _ := json.Marshal(objFound)
+	// 	return obj.updateState(string(objFoundString))
+	// }
 
 	return obj.updateState(resultString)
 }
